@@ -1,11 +1,9 @@
 #!/usr/bin/env python2
 
-import urllib
 import psycopg2
 import xmltodict
 
 import BaseHTTPServer
-
 
 
 # HTTPRequestHandler class
