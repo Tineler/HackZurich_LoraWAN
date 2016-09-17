@@ -1,8 +1,7 @@
 #!/usr/bin/env python2
 
-import psycopg2
 import xmltodict
-
+import httplib, urllib
 import BaseHTTPServer
 
 
@@ -33,25 +32,25 @@ class testHTTPServer_RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         # And insert into the db
         self.insert_data(post_data)
 
-    def insert_data(self, data):
+    def send_data(self, data):
         data_dict = xmltodict.parse(data)
         uplink_data = data_dict.get('DevEUI_uplink')
-        time = uplink_data.get('Time')
         dev_eui = uplink_data.get('DevEUI')
-        payload_hex = uplink_data.get('payload_hex')
-        payload = bytearray.fromhex(payload_hex).decode('utf-8')
-        try:
-            conn = psycopg2.connect("dbname=hackzurich")
-            cursor = conn.cursor()
-            cursor.execute("insert into sensor_message (dev_eui, time, payload, packet) values (%s, %s, %s, %s)",
-                           (dev_eui, time, payload, data))
-            cursor.connection.commit()
-            conn.close()
-        except Exception as e:
-            print("DB Insert failed: %s" % e)
 
+        if dev_eui == "9CD90BB52B6A1D03" or dev_eui == "9CD90BB52B6A1D04":
+            time = uplink_data.get('Time')
+            payload = uplink_data.get('payload_hex')
 
-
+            params = urllib.urlencode({'@dev_eui': dev_eui, '@payload': payload, '@time': time})
+            headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
+            try:
+                print(params)
+                conn = httplib.HTTPConnection("medicaldatamanagerapp.mybluemix.net", 80)
+                conn.request("POST", "/sensor-message", params, headers)
+                response = conn.getresponse()
+                print(response.status)
+            except Exception as e:
+                print("DB Insert failed: %s" % e)
 
 if __name__ == '__main__':
     server_address = ('0.0.0.0', 8001)
