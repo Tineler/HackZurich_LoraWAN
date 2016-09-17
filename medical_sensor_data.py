@@ -1,15 +1,15 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 
 import urllib
 import psycopg2
 import xmltodict
 
-from http.server import BaseHTTPRequestHandler, HTTPServer
+import BaseHTTPServer
 
 
 
 # HTTPRequestHandler class
-class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
+class testHTTPServer_RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     # not used, just a sample
     def do_GET(self):
         # Send response status code
@@ -41,7 +41,7 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
         time = uplink_data.get('Time')
         dev_eui = uplink_data.get('DevEUI')
         payload_hex = uplink_data.get('payload_hex')
-        payload = bytes.fromhex(payload_hex).decode('utf-8')
+        payload = bytearray.fromhex(payload_hex).decode('utf-8')
         try:
             conn = psycopg2.connect("dbname=hackzurich")
             cursor = conn.cursor()
@@ -57,6 +57,6 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 
 if __name__ == '__main__':
     server_address = ('0.0.0.0', 8001)
-    httpd = HTTPServer(server_address, testHTTPServer_RequestHandler)
+    httpd = BaseHTTPServer.HTTPServer(server_address, testHTTPServer_RequestHandler)
     print('running server...')
     httpd.serve_forever()
